@@ -50,6 +50,9 @@ DELETE - Deletes a single menu item
 class MenuItemsView(viewsets.ModelViewSet):
     queryset = Menu.objects.all()
     serializer_class = MenuSerializer
+    pagination_class = [Paginator]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def list(self, request):
         queryset = Menu.objects.all()
@@ -83,3 +86,50 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = MenuSerializer
     permission_classes = [IsAuthenticated]
+
+"""
+Handles the Bookings
+
+url = /restaurant/booking
+"""
+class BookingView(viewsets.ModelViewSet):
+    queryset = Booking.objects.all()
+    serializer_class = BookingSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        queryset = Booking.objects.all()
+        serializer = BookingSerializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    def create(self, request):
+        serializer = BookingSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class BookingItemView(viewsets.ViewSet):
+    serializer_class = BookingSerializer
+
+    def retrieve(self, request, pk=None):
+        queryset = Booking.objects.all()
+        item = get_object_or_404(queryset, pk=pk)
+        serializer = BookingSerializer(item)
+        return Response(serializer.data)
+    
+    def update(self, request, pk=None):
+        booking_item = Booking.objects.get(id=pk)
+        serializer = BookingSerializer(booking_item, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+    def destroy(self, request, pk=None):
+        booking_item = Booking.objects.get(id=pk)
+        booking_item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
